@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Облака и Реалистичный Огонь</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            height: 100vh;
+            cursor: pointer;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        /* Контейнеры пейзажей */
+        .landscape {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transition: opacity 1.5s ease;
+        }
+        
+        /* Стили для неба */
+        .sky {
+            background: linear-gradient(to bottom, #6ab7ff, #1c87e0);
+            z-index: 1;
+        }
+        
+        /* Стили для огня */
+        .inferno {
+            background: linear-gradient(to bottom, #000000 0%, #200000 30%, #500000 70%, #300000 100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 2;
+        }
+        
+        /* Солнце/Луна */
+        .sun {
+            position: absolute;
+            top: 50px;
+            right: 100px;
+            width: 70px;
+            height: 70px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 50px #FFA500, 0 0 100px #FF8C00;
+            transition: all 1.5s ease;
+            z-index: 3;
+        }
+        
+        /* Облака */
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.9;
+            animation: moveCloud linear infinite;
+            z-index: 3;
+        }
+        
+        .cloud1 {
+            width: 120px;
+            height: 40px;
+            top: 20%;
+            left: -150px;
+            animation-duration: 35s;
+            box-shadow: 0 0 25px 5px rgba(255, 255, 255, 0.7);
+        }
+        
+        .cloud1:before, .cloud1:after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        .cloud1:before {
+            width: 50px;
+            height: 50px;
+            top: -20px;
+            left: 15px;
+        }
+        
+        .cloud1:after {
+            width: 40px;
+            height: 40px;
+            top: -15px;
+            right: 15px;
+        }
+        
+        .cloud2 {
+            width: 180px;
+            height: 50px;
+            top: 40%;
+            left: -200px;
+            animation-duration: 45s;
+            animation-delay: 5s;
+            box-shadow: 0 0 30px 8px rgba(255, 255, 255, 0.7);
+        }
+        
+        .cloud2:before, .cloud2:after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        .cloud2:before {
+            width: 70px;
+            height: 70px;
+            top: -30px;
+            left: 20px;
+        }
+        
+        .cloud2:after {
+            width: 50px;
+            height: 50px;
+            top: -20px;
+            right: 30px;
+        }
+        
+        .cloud3 {
+            width: 150px;
+            height: 45px;
+            top: 60%;
+            left: -180px;
+            animation-duration: 40s;
+            animation-delay: 10s;
+            box-shadow: 0 0 20px 6px rgba(255, 255, 255, 0.7);
+        }
+        
+        .cloud3:before, .cloud3:after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        .cloud3:before {
+            width: 60px;
+            height: 60px;
+            top: -25px;
+            left: 15px;
+        }
+        
+        .cloud3:after {
+            width: 45px;
+            height: 45px;
+            top: -18px;
+            right: 25px;
+        }
+        
+        /* Элементы реалистичного огня */
+        .fire-base {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(to top, 
+                rgba(255, 100, 0, 0.8) 0%, 
+                rgba(255, 50, 0, 0.6) 10%,
+                rgba(255, 0, 0, 0.4) 30%,
+                rgba(100, 0, 0, 0.2) 60%,
+                transparent 100%);
+            z-index: 4;
+            animation: fireBaseFlicker 3s infinite alternate;
+        }
+        
+        .flame {
+            position: absolute;
+            bottom: 0;
+            border-radius: 50% 50% 20% 20%;
+            background: linear-gradient(to top, 
+                rgba(255, 255, 0, 0.8) 0%,
+                rgba(255, 150, 0, 0.8) 20%,
+                rgba(255, 50, 0, 0.8) 60%,
+                rgba(100, 0, 0, 0.5) 100%);
+            opacity: 0;
+            transform-origin: bottom center;
+            animation: flicker 3s infinite alternate;
+            z-index: 5;
+        }
+        
+        .flame-extra-large {
+            width: 150px;
+            height: 300px;
+            animation: flickerExtraLarge 5s infinite alternate;
+        }
+        
+        .flame-large {
+            width: 120px;
+            height: 250px;
+            animation: flickerLarge 4s infinite alternate;
+        }
+        
+        .flame-medium {
+            width: 80px;
+            height: 180px;
+            animation: flickerMedium 3s infinite alternate;
+        }
+        
+        .flame-small {
+            width: 50px;
+            height: 120px;
+            animation: flickerSmall 2s infinite alternate;
+        }
+        
+        .flame-tiny {
+            width: 30px;
+            height: 80px;
+            animation: flickerTiny 1.5s infinite alternate;
+        }
+        
+        .flame-super-tiny {
+            width: 15px;
+            height: 40px;
+            animation: flickerSuperTiny 1s infinite alternate;
+        }
+        
+        .spark {
+            position: absolute;
+            bottom: 0;
+            width: 3px;
+            height: 3px;
+            background: #FFcc00;
+            border-radius: 50%;
+            opacity: 0;
+            animation: sparkRise 3s linear infinite;
+            z-index: 6;
+        }
+        
+        .smoke {
+            position: absolute;
+            bottom: 0;
+            background: rgba(100, 100, 100, 0.2);
+            border-radius: 50%;
+            opacity: 0;
+            animation: smokeRise 8s linear infinite;
+            z-index: 4;
+        }
+        
+        .ember {
+            position: absolute;
+            bottom: 0;
+            width: 5px;
+            height: 5px;
+            background: #ff5500;
+            border-radius: 50%;
+            opacity: 0;
+            animation: emberRise 5s ease-in infinite;
+            z-index: 6;
+        }
+        
+        .glow {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: radial-gradient(ellipse at center, rgba(255, 100, 0, 0.3) 0%, rgba(255, 50, 0, 0.1) 40%, transparent 70%);
+            opacity: 0;
+            z-index: 3;
+            pointer-events: none;
+        }
+        
+        /* Изображения для режимов */
+        .mode-image {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 400px;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+            z-index: 7;
+            border-radius: 10px;
+            pointer-events: none;
+        }
+        
+        .sky-image {
+            opacity: 1;
+        }
+        
+        .inferno-image {
+            opacity: 0;
+        }
+        
+        /* Анимации */
+        @keyframes moveCloud {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(calc(100vw + 200px));
+            }
+        }
+        
+        @keyframes fireBaseFlicker {
+            0%, 100% {
+                opacity: 0.7;
+            }
+            50% {
+                opacity: 0.9;
+            }
+        }
+        
+        @keyframes flicker {
+            0%, 100% {
+                opacity: 0.8;
+                transform: scaleY(1) scaleX(1);
+            }
+            50% {
+                opacity: 0.9;
+                transform: scaleY(1.1) scaleX(1.05);
+            }
+        }
+        
+        @keyframes flickerExtraLarge {
+            0%, 100% {
+                opacity: 0.6;
+                transform: scaleY(1) scaleX(1) translateX(0);
+            }
+            20% {
+                transform: scaleY(1.1) scaleX(1.05) translateX(-8px);
+            }
+            40% {
+                opacity: 0.8;
+                transform: scaleY(1.2) scaleX(1.1) translateX(6px);
+            }
+            60% {
+                transform: scaleY(1.15) scaleX(1.07) translateX(-4px);
+            }
+            80% {
+                opacity: 0.7;
+                transform: scaleY(1.05) scaleX(1.02) translateX(2px);
+            }
+        }
+        
+        @keyframes flickerLarge {
+            0%, 100% {
+                opacity: 0.7;
+                transform: scaleY(1) scaleX(1) translateX(0);
+            }
+            25% {
+                transform: scaleY(1.1) scaleX(1.05) translateX(-5px);
+            }
+            50% {
+                opacity: 0.9;
+                transform: scaleY(1.15) scaleX(1.1) translateX(5px);
+            }
+            75% {
+                transform: scaleY(1.05) scaleX(1) translateX(-3px);
+            }
+        }
+        
+        @keyframes flickerMedium {
+            0%, 100% {
+                opacity: 0.8;
+                transform: scaleY(1) scaleX(1) translateX(0);
+            }
+            25% {
+                transform: scaleY(1.15) scaleX(1.1) translateX(4px);
+            }
+            50% {
+                opacity: 0.9;
+                transform: scaleY(1.2) scaleX(1.15) translateX(-4px);
+            }
+            75% {
+                transform: scaleY(1.1) scaleX(1.05) translateX(2px);
+            }
+        }
+        
+        @keyframes flickerSmall {
+            0%, 100% {
+                opacity: 0.9;
+                transform: scaleY(1) scaleX(1) translateX(0);
+            }
+            25% {
+                transform: scaleY(1.25) scaleX(1.2) translateX(-3px);
+            }
+            50% {
+                opacity: 1;
+                transform: scaleY(1.3) scaleX(1.25) translateX(3px);
+            }
+            75% {
+                transform: scaleY(1.2) scaleX(1.15) translateX(-2px);
+            }
+        }
+        
+        @keyframes flickerTiny {
+            0%, 100% {
+                opacity: 0.9;
+                transform: scaleY(1) scaleX(1) translateX(0);
+            }
+            33% {
+                transform: scaleY(1.4) scaleX(1.3) translateX(-2px);
+            }
+            66% {
+                opacity: 1;
+                transform: scaleY(1.5) scaleX(1.4) translateX(2px);
+            }
+        }
+        
+        @keyframes flickerSuperTiny {
+            0%, 100% {
+                opacity: 1;
+                transform: scaleY(1) scaleX(1) translateX(0);
+            }
+            50% {
+                transform: scaleY(1.6) scaleX(1.5) translateX(1px);
+            }
+        }
+        
+        @keyframes sparkRise {
+            0% {
+                opacity: 1;
+                transform: translateY(0) translateX(0) scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: translateY(-100px) translateX(10px) scale(0.8);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-250px) translateX(20px) scale(0.5);
+            }
+        }
+        
+        @keyframes emberRise {
+            0% {
+                opacity: 1;
+                transform: translateY(0) translateX(0) scale(1);
+            }
+            30% {
+                opacity: 0.9;
+                transform: translateY(-70px) translateX(15px) scale(0.9);
+            }
+            60% {
+                opacity: 0.7;
+                transform: translateY(-140px) translateX(-10px) scale(0.8);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-210px) translateX(5px) scale(0.6);
+            }
+        }
+        
+        @keyframes smokeRise {
+            0% {
+                opacity: 0.4;
+                transform: translateY(0) scale(1) rotate(0deg);
+            }
+            50% {
+                opacity: 0.2;
+                transform: translateY(-100px) scale(1.5) rotate(10deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-300px) scale(2) rotate(20deg);
+            }
+        }
+        
+        /* Подсказка */
+        .hint {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            opacity: 0.7;
+            transition: opacity 1s ease;
+            z-index: 10;
+            font-size: 16px;
+            pointer-events: none;
+        }
+        
+        /* Затемнение для нижней части экрана в огненном режиме */
+        .ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 20%;
+            background: linear-gradient(to top, 
+                rgba(0, 0, 0, 0.8) 0%,
+                rgba(50, 0, 0, 0.6) 30%,
+                transparent 100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 4;
+        }
+    </style>
+</head>
+<body>
+    <div class="landscape sky">
+        <div class="cloud cloud1"></div>
+        <div class="cloud cloud2"></div>
+        <div class="cloud cloud3"></div>
+        <img src="one.png" class="mode-image sky-image" alt="Горный пейзаж">
+    </div>
+    
+    <div class="landscape inferno" id="inferno">
+        <div class="fire-base"></div>
+        <div class="glow"></div>
+        <div class="ground"></div>
+        <img src="two.png" class="mode-image inferno-image" alt="Огненный пейзаж">
+    </div>
+    
+    <div class="sun" id="sun"></div>
+    <div class="hint">пальчек на экран</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const body = document.body;
+            const sky = document.querySelector('.sky');
+            const inferno = document.getElementById('inferno');
+            const sun = document.getElementById('sun');
+            const hint = document.querySelector('.hint');
+            const ground = document.querySelector('.ground');
+            const fireBase = document.querySelector('.fire-base');
+            const glow = document.querySelector('.glow');
+            const skyImage = document.querySelector('.sky-image');
+            const infernoImage = document.querySelector('.inferno-image');
+            
+            // Создаем элементы реалистичного огня
+            function createFireElements() {
+                const container = document.getElementById('inferno');
+                
+                // Создаем языки пламени (больше и разнообразнее)
+                const flameCount = 35;
+                for (let i = 0; i < flameCount; i++) {
+                    const flame = document.createElement('div');
+                    
+                    // Случайные параметры для пламени
+                    const left = Math.random() * 100;
+                    const sizeType = Math.floor(Math.random() * 6); // 6 типов пламени
+                    const animationDelay = Math.random() * 3;
+                    const animationDuration = 1 + Math.random() * 4;
+                    
+                    flame.style.left = left + '%';
+                    flame.style.animationDelay = animationDelay + 's';
+                    flame.style.animationDuration = animationDuration + 's';
+                    
+                    // Разные размеры пламени
+                    if (sizeType === 0) {
+                        flame.className = 'flame flame-extra-large';
+                        flame.style.bottom = Math.random() * 40 + 'px';
+                    } else if (sizeType === 1) {
+                        flame.className = 'flame flame-large';
+                        flame.style.bottom = Math.random() * 30 + 'px';
+                    } else if (sizeType === 2) {
+                        flame.className = 'flame flame-medium';
+                        flame.style.bottom = Math.random() * 20 + 'px';
+                    } else if (sizeType === 3) {
+                        flame.className = 'flame flame-small';
+                        flame.style.bottom = Math.random() * 15 + 'px';
+                    } else if (sizeType === 4) {
+                        flame.className = 'flame flame-tiny';
+                        flame.style.bottom = Math.random() * 10 + 'px';
+                    } else {
+                        flame.className = 'flame flame-super-tiny';
+                        flame.style.bottom = Math.random() * 5 + 'px';
+                    }
+                    
+                    // Случайное смещение по горизонтали
+                    flame.style.transform = `translateX(${Math.random() * 20 - 10}px)`;
+                    
+                    container.appendChild(flame);
+                }
+                
+                // Создаем искры (больше и разнообразнее)
+                for (let i = 0; i < 80; i++) {
+                    const spark = document.createElement('div');
+                    spark.className = 'spark';
+                    
+                    const left = Math.random() * 100;
+                    const bottom = Math.random() * 50;
+                    const animationDelay = Math.random() * 5;
+                    const animationDuration = Math.random() * 2 + 2;
+                    const size = Math.random() * 3 + 1;
+                    
+                    spark.style.left = left + '%';
+                    spark.style.bottom = bottom + 'px';
+                    spark.style.animationDelay = animationDelay + 's';
+                    spark.style.animationDuration = animationDuration + 's';
+                    spark.style.width = size + 'px';
+                    spark.style.height = size + 'px';
+                    
+                    // Разный цвет искр
+                    const sparkColor = Math.random();
+                    if (sparkColor < 0.7) {
+                        spark.style.background = '#FFcc00';
+                    } else if (sparkColor < 0.9) {
+                        spark.style.background = '#FF5500';
+                    } else {
+                        spark.style.background = '#FFFFFF';
+                    }
+                    
+                    container.appendChild(spark);
+                }
+                
+                // Создаем угольки
+                for (let i = 0; i < 40; i++) {
+                    const ember = document.createElement('div');
+                    ember.className = 'ember';
+                    
+                    const left = Math.random() * 100;
+                    const bottom = Math.random() * 40;
+                    const animationDelay = Math.random() * 5;
+                    const animationDuration = Math.random() * 3 + 3;
+                    const size = Math.random() * 4 + 2;
+                    
+                    ember.style.left = left + '%';
+                    ember.style.bottom = bottom + 'px';
+                    ember.style.animationDelay = animationDelay + 's';
+                    ember.style.animationDuration = animationDuration + 's';
+                    ember.style.width = size + 'px';
+                    ember.style.height = size + 'px';
+                    
+                    container.appendChild(ember);
+                }
+                
+                // Создаем дым (больше и разнообразнее)
+                for (let i = 0; i < 30; i++) {
+                    const smoke = document.createElement('div');
+                    smoke.className = 'smoke';
+                    
+                    const left = Math.random() * 100;
+                    const bottom = Math.random() * 100;
+                    const size = Math.random() * 60 + 30;
+                    const animationDelay = Math.random() * 10;
+                    const animationDuration = Math.random() * 5 + 5;
+                    
+                    smoke.style.left = left + '%';
+                    smoke.style.bottom = bottom + 'px';
+                    smoke.style.width = size + 'px';
+                    smoke.style.height = size + 'px';
+                    smoke.style.animationDelay = animationDelay + 's';
+                    smoke.style.animationDuration = animationDuration + 's';
+                    
+                    // Разная прозрачность дыма
+                    smoke.style.background = `rgba(100, 100, 100, ${0.1 + Math.random() * 0.15})`;
+                    
+                    container.appendChild(smoke);
+                }
+            }
+            
+            // Инициализация огня
+            createFireElements();
+            
+            // Обработчик клика для смены пейзажа
+            let isFire = false;
+            
+            document.body.addEventListener('click', function() {
+                isFire = !isFire;
+                
+                if (isFire) {
+                    // Переключаемся на огонь
+                    sky.style.opacity = '0';
+                    inferno.style.opacity = '1';
+                    sun.style.background = '#ff4500';
+                    sun.style.boxShadow = '0 0 50px #ff0000, 0 0 100px #8b0000';
+                    ground.style.opacity = '1';
+                    glow.style.opacity = '1';
+                    skyImage.style.opacity = '0';
+                    infernoImage.style.opacity = '1';
+                    hint.textContent = 'Нажмите again чтобы вернуться к небу';
+                    
+                    // Активируем пламя
+                    document.querySelectorAll('.flame, .spark, .smoke, .ember').forEach(el => {
+                        el.style.opacity = '1';
+                    });
+                } else {
+                    // Возвращаем небо
+                    sky.style.opacity = '1';
+                    inferno.style.opacity = '0';
+                    sun.style.background = '#FFD700';
+                    sun.style.boxShadow = '0 0 50px #FFA500, 0 0 100px #FF8C00';
+                    ground.style.opacity = '0';
+                    glow.style.opacity = '0';
+                    skyImage.style.opacity = '1';
+                    infernoImage.style.opacity = '0';
+                    hint.textContent = 'Нажмите anywhere чтобы сменить пейзаж';
+                    
+                    // Деактивируем пламя
+                    document.querySelectorAll('.flame, .spark, .smoke, .ember').forEach(el => {
+                        el.style.opacity = '0';
+                    });
+                }
+            });
+            
+            // Автоматическое скрытие подсказки
+            setTimeout(() => {
+                hint.style.opacity = '0';
+                
+                // Восстановление подсказки при наведении
+                hint.addEventListener('mouseover', () => {
+                    hint.style.opacity = '0.7';
+                });
+                
+                hint.addEventListener('mouseout', () => {
+                    setTimeout(() => {
+                        hint.style.opacity = '0';
+                    }, 2000);
+                });
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
